@@ -107,6 +107,13 @@ body.night .btn-night{background:#200404;border-color:#6a1818;color:#ff7070}
 .sort-row{display:flex;gap:4px;margin-bottom:4px}
 .sort-btn{font-size:10px;padding:3px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--line);cursor:pointer;color:var(--muted);transition:all .12s}
 .sort-btn:hover,.sort-btn.active{border-color:var(--accent);color:var(--accent)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;font-size:11px;color:var(--muted)}
+.toggle-row label{display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:11px}
+.toggle-row input[type=checkbox]{width:auto;accent-color:var(--accent)}
+.mask-grid{display:grid;grid-template-columns:1fr;gap:5px;margin-top:5px}
+.mask-control{display:grid;grid-template-columns:108px 1fr 28px;align-items:center;gap:6px;font-size:10px;color:var(--muted)}
+.mask-control input{width:100%}
+.mask-value{font-family:'Space Mono',monospace;color:var(--accent);text-align:right}
 
 /* ── Liste objets ── */
 .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--muted);margin-bottom:4px}
@@ -121,6 +128,8 @@ body.night .card-obj:hover{border-color:#cc3030}
 .obj-coords{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Space Mono',monospace;line-height:1.6}
 .obj-note{font-size:10px;color:var(--muted);margin-top:2px;font-style:italic}
 .obj-fov{font-size:10px;color:var(--warn);margin-top:2px}
+.obj-events{font-size:9px;color:var(--ok);margin-top:3px;font-family:'Space Mono',monospace;line-height:1.5}
+.obj-mask{color:var(--warn)}
 .star-fav{float:right;cursor:pointer;font-size:12px;opacity:.3;transition:opacity .15s;margin-left:4px}
 .star-fav:hover,.star-fav.on{opacity:1}
 
@@ -153,7 +162,7 @@ canvas{display:block;flex:1;width:100%;cursor:crosshair}
   <div class="logo">
     <span class="logo-icon">🔭</span>
     <div class="logo-text">
-      <h1>Mini Stellarium — Sarzeau <span class="version-tag">v4.3.0</span></h1>
+      <h1>Mini Stellarium — Sarzeau <span class="version-tag">v4.4.0</span></h1>
       <div class="sub">Carte horizon · balcon nord · 270° → 85°</div>
     </div>
   </div>
@@ -229,6 +238,16 @@ canvas{display:block;flex:1;width:100%;cursor:crosshair}
       </div>
     </div>
     <div class="hint" style="margin-top:4px">Azimut : 0°=N · 90°=E · 180°=S · 270°=O</div>
+    <div class="sep" style="margin-top:8px"></div>
+    <div class="toggle-row"><label><input id="constLinesToggle" type="checkbox" checked/> Lignes des constellations</label></div>
+    <div class="toggle-row"><label><input id="constNamesToggle" type="checkbox" checked/> Noms des constellations</label></div>
+    <div class="toggle-row"><label><input id="horizonToggle" type="checkbox" checked/> Masque du balcon</label></div>
+    <div class="mask-grid" id="horizonControls">
+      <label class="mask-control">Arbre O · 290°<input id="maskWest" type="range" min="0" max="20" step="0.5" value="6"/><span class="mask-value" id="maskWestValue">6°</span></label>
+      <label class="mask-control">Ville NE · 30°<input id="maskCity" type="range" min="0" max="20" step="0.5" value="4.5"/><span class="mask-value" id="maskCityValue">4.5°</span></label>
+      <label class="mask-control">Arbre NE · 60°<input id="maskEast" type="range" min="0" max="20" step="0.5" value="6"/><span class="mask-value" id="maskEastValue">6°</span></label>
+    </div>
+    <div class="hint" style="margin-top:4px">Hauteurs initiales reprises du dessin actuel. Ajuste-les après mesure depuis le balcon.</div>
   </div>
 
   <!-- 🔭 Oculaires -->
@@ -337,6 +356,7 @@ canvas{display:block;flex:1;width:100%;cursor:crosshair}
     <span class="lg"><span style="display:inline-block;width:7px;height:7px;background:#ff80cc;border-radius:1px"></span>&nbsp;Nébuleuse</span>
     <span class="lg"><span class="lg-sq" style="background:#80d4ff"></span>Amas ouvert</span>
     <span class="lg"><span class="lg-dot" style="background:#ffc947;border-radius:0"></span>Crépuscule</span>
+    <span class="lg"><span class="lg-sq" style="background:#33506b"></span>Masque balcon</span>
   </div>
 </div>
 </main>
@@ -372,6 +392,35 @@ const objects=[
   {name:'Dubhe',type:'star',ra:11.0621,dec:61.7508,mag:1.79,note:'Grande Ourse — repère GCA'},
   {name:'Alkaid',type:'star',ra:13.7923,dec:49.3133,mag:1.86,note:'Bout du manche GU'},
   {name:'Mizar',type:'star',ra:13.3987,dec:54.9254,mag:2.27,note:'Double visuelle — GU'},
+  {name:'Merak',type:'star',ra:11.0307,dec:56.3824,mag:2.37,note:'Grande Ourse'},
+  {name:'Phecda',type:'star',ra:11.8972,dec:53.6948,mag:2.44,note:'Grande Ourse'},
+  {name:'Megrez',type:'star',ra:12.257,dec:57.0326,mag:3.31,note:'Grande Ourse'},
+  {name:'Alioth',type:'star',ra:12.9005,dec:55.9598,mag:1.76,note:'Grande Ourse'},
+  {name:'Kochab',type:'star',ra:14.8451,dec:74.1555,mag:2.08,note:'Petite Ourse'},
+  {name:'Pherkad',type:'star',ra:15.3455,dec:71.834,mag:3.0,note:'Petite Ourse'},
+  {name:'Yildun',type:'star',ra:17.5369,dec:86.5865,mag:4.35,note:'Petite Ourse'},
+  {name:'Epsilon UMi',type:'star',ra:16.7662,dec:82.0373,mag:4.21,note:'Petite Ourse'},
+  {name:'Zeta UMi',type:'star',ra:15.7343,dec:77.7945,mag:4.32,note:'Petite Ourse'},
+  {name:'Eta UMi',type:'star',ra:16.2918,dec:75.7553,mag:4.95,note:'Petite Ourse'},
+  {name:'Caph',type:'star',ra:0.1529,dec:59.1498,mag:2.28,note:'Cassiopée'},
+  {name:'Schedar',type:'star',ra:0.6751,dec:56.5373,mag:2.24,note:'Cassiopée'},
+  {name:'Navi',type:'star',ra:0.9451,dec:60.7167,mag:2.15,note:'Cassiopée'},
+  {name:'Ruchbah',type:'star',ra:1.4303,dec:60.2353,mag:2.68,note:'Cassiopée'},
+  {name:'Segin',type:'star',ra:1.9066,dec:63.67,mag:3.35,note:'Cassiopée'},
+  {name:'Sadr',type:'star',ra:20.3705,dec:40.2567,mag:2.23,note:'Cygne'},
+  {name:'Gienah Cygni',type:'star',ra:20.7702,dec:33.9703,mag:2.48,note:'Cygne'},
+  {name:'Delta Cygni',type:'star',ra:19.7496,dec:45.1308,mag:2.87,note:'Cygne'},
+  {name:'Albireo',type:'star',ra:19.512,dec:27.9597,mag:3.05,note:'Cygne — belle double colorée'},
+  {name:'Sheliak',type:'star',ra:18.8347,dec:33.3627,mag:3.52,note:'Lyre'},
+  {name:'Sulafat',type:'star',ra:18.9824,dec:32.6896,mag:3.25,note:'Lyre'},
+  {name:'Bellatrix',type:'star',ra:5.4189,dec:6.3497,mag:1.64,note:'Orion'},
+  {name:'Alnilam',type:'star',ra:5.6036,dec:-1.2019,mag:1.69,note:'Orion — ceinture'},
+  {name:'Mintaka',type:'star',ra:5.5334,dec:-0.2991,mag:2.23,note:'Orion — ceinture'},
+  {name:'Alnitak',type:'star',ra:5.6793,dec:-1.9426,mag:1.77,note:'Orion — ceinture'},
+  {name:'Saiph',type:'star',ra:5.7959,dec:-9.6696,mag:2.06,note:'Orion'},
+  {name:'Menkalinan',type:'star',ra:5.9921,dec:44.9474,mag:1.9,note:'Cocher'},
+  {name:'Mahasim',type:'star',ra:5.9953,dec:37.2126,mag:2.62,note:'Cocher'},
+  {name:'Elnath',type:'star',ra:5.4382,dec:28.6074,mag:1.65,note:'Cocher'},
   // Galaxies
   {name:'M31 — Andromède',type:'messier',kind:'galaxy',ra:0.7123,dec:41.269,mag:3.4,note:'Jumelles conseillées'},
   {name:'M33 — Triangulum',type:'messier',kind:'galaxy',ra:1.5637,dec:30.66,mag:5.7,note:'Ciel sombre nécessaire'},
@@ -406,6 +455,16 @@ const objects=[
   {name:'M36',type:'messier',kind:'opencluster',ra:5.6073,dec:34.135,mag:6.0,note:'Cocher'},
   {name:'M37',type:'messier',kind:'opencluster',ra:5.8733,dec:32.553,mag:5.6,note:'Cocher — le plus riche'},
   {name:'M38',type:'messier',kind:'opencluster',ra:5.4785,dec:35.8375,mag:6.4,note:'Cocher'},
+];
+
+const CONSTELLATIONS=[
+  {name:'Grande Ourse',stars:['Dubhe','Merak','Phecda','Megrez','Alioth','Mizar','Alkaid'],lines:[['Dubhe','Merak'],['Merak','Phecda'],['Phecda','Megrez'],['Megrez','Dubhe'],['Megrez','Alioth'],['Alioth','Mizar'],['Mizar','Alkaid']]},
+  {name:'Petite Ourse',stars:['Polaris','Yildun','Epsilon UMi','Zeta UMi','Eta UMi','Kochab','Pherkad'],lines:[['Polaris','Yildun'],['Yildun','Epsilon UMi'],['Epsilon UMi','Zeta UMi'],['Zeta UMi','Eta UMi'],['Eta UMi','Kochab'],['Kochab','Pherkad'],['Pherkad','Zeta UMi']]},
+  {name:'Cassiopée',stars:['Caph','Schedar','Navi','Ruchbah','Segin'],lines:[['Caph','Schedar'],['Schedar','Navi'],['Navi','Ruchbah'],['Ruchbah','Segin']]},
+  {name:'Cygne',stars:['Deneb','Sadr','Gienah Cygni','Delta Cygni','Albireo'],lines:[['Deneb','Sadr'],['Sadr','Albireo'],['Sadr','Gienah Cygni'],['Sadr','Delta Cygni']]},
+  {name:'Lyre',stars:['Vega','Sheliak','Sulafat'],lines:[['Vega','Sheliak'],['Sheliak','Sulafat'],['Sulafat','Vega']]},
+  {name:'Orion',stars:['Betelgeuse','Bellatrix','Mintaka','Alnilam','Alnitak','Saiph','Rigel'],lines:[['Betelgeuse','Bellatrix'],['Bellatrix','Mintaka'],['Mintaka','Alnilam'],['Alnilam','Alnitak'],['Alnitak','Saiph'],['Saiph','Rigel'],['Rigel','Betelgeuse']]},
+  {name:'Cocher',stars:['Capella','Menkalinan','Mahasim','Elnath'],lines:[['Capella','Menkalinan'],['Menkalinan','Mahasim'],['Mahasim','Elnath'],['Elnath','Capella']]},
 ];
 
 // ── Oculaires Nexstar 6 SE (F=1500mm) ──
@@ -538,6 +597,54 @@ const status=document.getElementById('status'),list=document.getElementById('lis
 const hourSlider=document.getElementById('hourSlider'),hourLabel=document.getElementById('hourLabel');
 const skyTime=document.getElementById('skyTime');
 const tooltip=document.getElementById('tooltip');
+const constLinesToggle=document.getElementById('constLinesToggle');
+const constNamesToggle=document.getElementById('constNamesToggle');
+const horizonToggle=document.getElementById('horizonToggle');
+const maskWest=document.getElementById('maskWest'),maskCity=document.getElementById('maskCity'),maskEast=document.getElementById('maskEast');
+const dailyEventCache=new Map();
+
+function angularDistance(a,b){return Math.abs(((a-b+540)%360)-180);}
+function horizonAtAz(az){
+  if(!horizonToggle.checked) return 0;
+  const features=[
+    {az:290,height:+maskWest.value,halfWidth:7},
+    {az:30,height:+maskCity.value,halfWidth:10},
+    {az:60,height:+maskEast.value,halfWidth:7},
+  ];
+  let height=0;
+  for(const f of features){
+    const d=angularDistance(az,f.az);
+    if(d<f.halfWidth) height=Math.max(height,f.height*(1-d/f.halfWidth));
+  }
+  return height;
+}
+function formatClock(d){return d?d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}):'—';}
+function interpolateCrossing(a,b){
+  const span=b.date-a.date;
+  const fraction=Math.abs(a.alt)/(Math.abs(a.alt)+Math.abs(b.alt)||1);
+  return new Date(a.date.getTime()+span*fraction);
+}
+function getDailyEvents(o,date,latv,lonv){
+  const day=new Date(date);day.setHours(0,0,0,0);
+  const key=[o.name,day.toISOString().slice(0,10),latv.toFixed(4),lonv.toFixed(4)].join('|');
+  if(dailyEventCache.has(key)) return dailyEventCache.get(key);
+  const samples=[];
+  for(let minute=0;minute<=1440;minute+=5){
+    const d=new Date(day.getTime()+minute*60000),rd=getRD(o,d),p=altAz(rd.ra,rd.dec,d,latv,lonv);
+    samples.push({date:d,alt:p.alt});
+  }
+  let rise=null,set=null,max=samples[0],min=samples[0];
+  for(let i=1;i<samples.length;i++){
+    const a=samples[i-1],b=samples[i];
+    if(a.alt<=0&&b.alt>0&&!rise) rise=interpolateCrossing(a,b);
+    if(a.alt>0&&b.alt<=0&&!set) set=interpolateCrossing(a,b);
+    if(b.alt>max.alt) max=b;
+    if(b.alt<min.alt) min=b;
+  }
+  const result={rise,set,transit:max.date,maxAlt:max.alt,circumpolar:!rise&&!set&&min.alt>0,neverRises:!rise&&!set&&max.alt<=0};
+  dailyEventCache.set(key,result);
+  return result;
+}
 
 hourSlider.oninput=()=>{
   const raw=+hourSlider.value;
@@ -637,8 +744,10 @@ function compute(){
     const typeOk=(typ==='all'||typ===o.type);
     const inWin=inWindow(p.az,a1,a2);
     const aboveHorizon=p.alt>=0;
-    const vis=p.alt>=minA&&inWin&&typeOk&&magOk;
-    rows.push({...o,ra:rd.ra,dec:rd.dec,alt:p.alt,az:p.az,visible:vis,inWin,aboveHorizon,magOk,typeOk});
+    const horizonAlt=horizonAtAz(p.az);
+    const blockedByHorizon=p.alt>=0&&p.alt<horizonAlt;
+    const vis=p.alt>=Math.max(minA,horizonAlt)&&inWin&&typeOk&&magOk;
+    rows.push({...o,ra:rd.ra,dec:rd.dec,alt:p.alt,az:p.az,horizonAlt,blockedByHorizon,visible:vis,inWin,aboveHorizon,magOk,typeOk});
   }
 
   // Tri
@@ -649,23 +758,29 @@ function compute(){
     return 0;
   });
 
-  renderList(rows);
+  renderList(rows,date,latv,lonv);
   draw(rows,a1,a2,minA,date,latv,lonv,magLim);
   renderFavBar();
 
   const nb=rows.filter(r=>r.visible).length;
   document.getElementById('countTitle').textContent=`${nb} objet${nb>1?'s':''} visible${nb>1?'s':''} dans la fenêtre`;
   const lv=lst(date,lonv);
-  status.innerHTML=`<span>TSL</span> ${lv.toFixed(3)} h &nbsp;·&nbsp; <span>Lat</span> ${latv}° <span>Lon</span> ${lonv}°<br><span>Fenêtre</span> ${a1}°→${a2}° &nbsp;·&nbsp; <span>Alt min</span> ${minA}° &nbsp;·&nbsp; <span>Mag</span> ≤ ${magMax.toFixed(1)}`;
+  status.innerHTML=`<span>TSL</span> ${lv.toFixed(3)} h &nbsp;·&nbsp; <span>Lat</span> ${latv}° <span>Lon</span> ${lonv}°<br><span>Fenêtre</span> ${a1}°→${a2}° &nbsp;·&nbsp; <span>Alt min</span> ${minA}° &nbsp;·&nbsp; <span>Mag</span> ≤ ${magMax.toFixed(1)} &nbsp;·&nbsp; <span>Masque</span> ${horizonToggle.checked?'actif':'inactif'}`;
 }
 
-function renderList(rows){
+function renderList(rows,date,latv,lonv){
   const visible=rows.filter(r=>r.visible);
   const ocul=oculaires.find(o=>o.mm===selectedOcul);
   list.innerHTML=visible.length?visible.map(r=>{
     const oc=r.name===selectedObj?'selected':'';
     const isFav=favorites.includes(r.name);
     const fovLine=ocul?`<div class="obj-fov">Champ ${ocul.name} (${ocul.gross}×) : ${ocul.fov.toFixed(2)}° · ${(ocul.fov*60).toFixed(0)}'</div>`:'';
+    const ev=getDailyEvents(r,date,latv,lonv);
+    const eventLine=ev.circumpolar
+      ?`Circumpolaire · culmine ${formatClock(ev.transit)} (${ev.maxAlt.toFixed(0)}°)`
+      :ev.neverRises
+        ?`Ne se lève pas ce jour`
+        :`Lever ${formatClock(ev.rise)} · culmine ${formatClock(ev.transit)} (${ev.maxAlt.toFixed(0)}°) · coucher ${formatClock(ev.set)}`;
     return `<div class="card-obj ${oc}" onclick="selectObj('${r.name.replace(/'/g,"\\'")}')">
       <div class="obj-row">
         <span class="obj-name">${r.name}</span>
@@ -675,6 +790,7 @@ function renderList(rows){
         </span>
       </div>
       <div class="obj-coords">Az <b>${r.az.toFixed(1)}°</b> · Alt <b>${r.alt.toFixed(1)}°</b>${r.mag!==undefined?` · mag <b>${r.mag}</b>`:''}</div>
+      <div class="obj-events">${eventLine}</div>
       ${r.note?`<div class="obj-note">${r.note}</div>`:''}
       ${fovLine}
     </div>`;
@@ -787,6 +903,20 @@ function draw(rows,a1,a2,minA,date,latv,lonv,magLim){
   ctx.fillStyle=night?'rgba(60,5,5,.1)':'rgba(60,130,220,.05)';
   ctx.fillRect(PL,PT,CW,CH);
 
+  // Masque d'horizon du balcon, réglable depuis les filtres
+  if(horizonToggle.checked){
+    ctx.save();
+    ctx.beginPath();ctx.moveTo(PL,PT+CH);
+    for(let px=0;px<=CW;px+=3){
+      const az=(a1Z+spanZ*px/CW+360)%360;
+      ctx.lineTo(PL+px,yFromAlt(horizonAtAz(az)));
+    }
+    ctx.lineTo(PL+CW,PT+CH);ctx.closePath();
+    ctx.fillStyle=night?'rgba(55,10,10,.75)':'rgba(28,45,61,.88)';ctx.fill();
+    ctx.strokeStyle=night?'rgba(170,55,55,.8)':'rgba(90,135,170,.85)';ctx.lineWidth=1.2;ctx.stroke();
+    ctx.restore();
+  }
+
   // Grille azimut
   const azTicks=8;
   ctx.font='9px Space Mono,monospace';ctx.fillStyle=night?'#663333':'#507080';
@@ -809,20 +939,27 @@ function draw(rows,a1,a2,minA,date,latv,lonv,magLim){
     ctx.textAlign='center';ctx.fillText(c.l,x,PT+CH+28);
   }
 
-  // Constellations — lignes simples (Grande Ourse)
-  const constLines=[
-    // Grande Ourse
-    ['Dubhe','Mizar'],['Mizar','Alkaid'],
-  ];
-  for(const [n1,n2] of constLines){
-    const r1=rows.find(r=>r.name===n1),r2=rows.find(r=>r.name===n2);
-    if(!r1||!r2) continue;
-    const x1=xFromAz(r1.az),x2=xFromAz(r2.az);
-    if(x1===null||x2===null) continue;
-    ctx.strokeStyle=night?'rgba(150,60,60,.25)':'rgba(80,120,180,.3)';
-    ctx.lineWidth=.8;ctx.setLineDash([4,4]);
-    ctx.beginPath();ctx.moveTo(x1,yFromAlt(r1.alt));ctx.lineTo(x2,yFromAlt(r2.alt));ctx.stroke();
-    ctx.setLineDash([]);
+  const labelCandidates=[];
+  // Constellations — sept figures principales, lignes et noms activables
+  for(const constellation of CONSTELLATIONS){
+    if(constLinesToggle.checked){
+      for(const [n1,n2] of constellation.lines){
+        const r1=rows.find(r=>r.name===n1),r2=rows.find(r=>r.name===n2);
+        if(!r1||!r2||r1.alt<-5||r2.alt<-5) continue;
+        const x1=xFromAz(r1.az),x2=xFromAz(r2.az);
+        if(x1===null||x2===null||Math.abs(x1-x2)>CW*.55) continue;
+        ctx.strokeStyle=night?'rgba(180,65,65,.38)':'rgba(105,155,220,.42)';
+        ctx.lineWidth=1;ctx.setLineDash([4,4]);
+        ctx.beginPath();ctx.moveTo(x1,yFromAlt(r1.alt));ctx.lineTo(x2,yFromAlt(r2.alt));ctx.stroke();
+        ctx.setLineDash([]);
+      }
+    }
+    if(constNamesToggle.checked){
+      const points=constellation.stars.map(name=>rows.find(r=>r.name===name)).filter(r=>r&&r.alt>0).map(r=>({x:xFromAz(r.az),y:yFromAlt(r.alt)})).filter(p=>p.x!==null);
+      if(points.length>=2){
+        labelCandidates.push({text:constellation.name,x:points.reduce((s,p)=>s+p.x,0)/points.length,y:points.reduce((s,p)=>s+p.y,0)/points.length,priority:1,font:'italic 10px Outfit,sans-serif',color:night?'rgba(220,95,95,.75)':'rgba(115,170,225,.82)',centered:true});
+      }
+    }
   }
 
   // ── Trajectoires (survol/sélection) ──
@@ -831,7 +968,8 @@ function draw(rows,a1,a2,minA,date,latv,lonv,magLim){
     if(r.name!==_hovered&&r.name!==selectedObj) continue;
     const col=color(r.type,r.kind);
     const pts=[];
-    for(let dm=-150;dm<=150;dm+=8){
+    const trajectoryRange=r.name===selectedObj?240:150;
+    for(let dm=-trajectoryRange;dm<=trajectoryRange;dm+=10){
       const td=new Date(dateBase.getTime()+dm*60000);
       const rd=getRD(r,td);
       const p=altAz(rd.ra,rd.dec,td,latv,lonv);
@@ -839,16 +977,23 @@ function draw(rows,a1,a2,minA,date,latv,lonv,magLim){
     }
     for(let i=0;i<pts.length-1;i++){
       const p=pts[i],q=pts[i+1];
-      if(!p.x||!q.x||p.alt<-2||q.alt<-2) continue;
+      if(p.x===null||q.x===null||p.alt<-2||q.alt<-2||Math.abs(p.x-q.x)>CW*.55) continue;
       ctx.save();
-      ctx.globalAlpha=p.dm<0?0.22:0.5;
-      ctx.strokeStyle=col;ctx.lineWidth=r.name===selectedObj?2.2:1.5;
+      ctx.globalAlpha=r.name===selectedObj?(p.dm<0?.48:.92):(p.dm<0?.22:.5);
       ctx.setLineDash(p.dm<0?[3,4]:[]);
+      ctx.strokeStyle=night?'rgba(20,0,0,.85)':'rgba(0,5,12,.9)';ctx.lineWidth=r.name===selectedObj?5:3;
+      ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
+      ctx.strokeStyle=col;ctx.lineWidth=r.name===selectedObj?2.6:1.5;
       ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();
       ctx.setLineDash([]);ctx.restore();
     }
+    const nowPoint=pts.find(p=>p.dm===0);
+    if(nowPoint&&nowPoint.x!==null&&nowPoint.alt>-2){
+      ctx.save();ctx.fillStyle=col;ctx.strokeStyle=night?'#180000':'#02070d';ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(nowPoint.x,nowPoint.y,r.name===selectedObj?5:3.5,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore();
+    }
     // Flèche de direction
-    const last=pts.filter(p=>p.x&&p.alt>-2);
+    const last=pts.filter(p=>p.x!==null&&p.alt>-2&&p.dm>=0);
     if(last.length>=2){
       const p1=last[last.length-2],p2=last[last.length-1];
       const angle=Math.atan2(p2.y-p1.y,p2.x-p1.x),as=6;
@@ -861,13 +1006,13 @@ function draw(rows,a1,a2,minA,date,latv,lonv,magLim){
     }
     // Marques horaires
     for(const pt of pts){
-      if(!pt.x||pt.alt<-2||pt.dm%60!==0||pt.dm===0) continue;
+      if(pt.x===null||pt.alt<-2||pt.dm%60!==0||pt.dm===0) continue;
       ctx.save();ctx.globalAlpha=0.55;
       ctx.fillStyle=col;ctx.beginPath();ctx.arc(pt.x,pt.y,2,0,Math.PI*2);ctx.fill();
       ctx.fillStyle=night?'rgba(255,160,160,.7)':'rgba(200,225,255,.75)';
       ctx.font='9px Space Mono,monospace';ctx.textAlign='center';
-      const h=new Date(dateBase.getTime()+pt.dm*60000).getHours();
-      ctx.fillText(h+'h',pt.x,pt.y-4);ctx.restore();
+      const hd=new Date(dateBase.getTime()+pt.dm*60000);
+      ctx.fillText(pad(hd.getHours())+'h',pt.x,pt.y-5);ctx.restore();
     }
   }
 
@@ -876,7 +1021,7 @@ function draw(rows,a1,a2,minA,date,latv,lonv,magLim){
     if(r.alt<-5) continue;
     const x=xFromAz(r.az);if(x===null) continue;
     const y=yFromAlt(r.alt);
-    const vis=r.alt>=minA&&r.inWin&&r.typeOk&&r.magOk;
+    const vis=r.visible;
     const isSel=r.name===selectedObj,isHov=r.name===_hovered;
     ctx.globalAlpha=vis?1:(r.aboveHorizon?0.18:0.06);
     const col=color(r.type,r.kind);
@@ -935,78 +1080,46 @@ function draw(rows,a1,a2,minA,date,latv,lonv,magLim){
       }
     }
 
-    // Label
+    // Les libellés sont posés ensuite avec détection des chevauchements
     if(vis||(isSel||isHov)){
       const sn=r.name.split(' — ')[0];
-      ctx.fillStyle=night?'#ff8080':'#d8e8f8';
-      ctx.font=(isSel||isHov)?'bold 11px Outfit,sans-serif':'10px Outfit,sans-serif';
-      ctx.globalAlpha=vis?1:0.45;ctx.textAlign='left';
-      ctx.fillText(sn,x+size+3,y+3.5);
+      const priority=isSel?100:isHov?90:(r.type==='sun'||r.type==='moon')?70:r.type==='planet'?60:r.type==='star'?Math.max(12,38-(r.mag||0)*5):10;
+      labelCandidates.push({text:sn,x,y,size,priority,font:(isSel||isHov)?'bold 11px Outfit,sans-serif':'10px Outfit,sans-serif',color:night?'#ff8080':'#d8e8f8'});
     }
     ctx.globalAlpha=1;
   }
 
-  // Conifère Az 290°
-  const treeX290=xFromAz(290);
-  if(treeX290!==null){
-    const treeBase290=PT+CH;
-    const treeH290=CH*0.10;
-    ctx.save();
-    ctx.globalAlpha=0.45;
-    ctx.fillStyle=night?'#3a2510':'#5a3818';
-    ctx.fillRect(treeX290-1.5,treeBase290-treeH290*0.18,3,treeH290*0.18);
-    ctx.fillStyle=night?'#1a3014':'#2a5020';
-    ctx.beginPath();
-    ctx.moveTo(treeX290-treeH290*0.22,treeBase290-treeH290*0.16);
-    ctx.lineTo(treeX290+treeH290*0.22,treeBase290-treeH290*0.16);
-    ctx.lineTo(treeX290,treeBase290-treeH290);
-    ctx.closePath();ctx.fill();
-    ctx.restore();
-  }
-
-  // Ville Az 30° (repère urbain)
-  const cityX=xFromAz(30);
-  if(cityX!==null){
-    const cityBase=PT+CH;
-    const bH=CH*0.055, bW=10;
-    ctx.save();
-    ctx.globalAlpha=0.38;
-    // Bâtiment principal
-    ctx.fillStyle=night?'#2a3040':'#3a4a60';
-    ctx.fillRect(cityX-bW/2, cityBase-bH, bW, bH);
-    // Toit triangulaire
-    ctx.fillStyle=night?'#222a38':'#2e3c50';
-    ctx.beginPath();
-    ctx.moveTo(cityX-bW/2-2, cityBase-bH);
-    ctx.lineTo(cityX+bW/2+2, cityBase-bH);
-    ctx.lineTo(cityX, cityBase-bH*1.35);
-    ctx.closePath();ctx.fill();
-    // Fenêtres
-    ctx.fillStyle=night?'rgba(255,220,100,.22)':'rgba(200,220,255,.28)';
-    for(let fy=cityBase-bH+3;fy<cityBase-3;fy+=5){
-      for(let fx=cityX-bW/2+2;fx<cityX+bW/2-2;fx+=4){
-        ctx.fillRect(fx,fy,2,3);
-      }
+  // Repères du masque, synchronisés avec les réglages
+  if(horizonToggle.checked){
+    const landmarks=[{az:290,height:+maskWest.value,icon:'▲'},{az:30,height:+maskCity.value,icon:'▥'},{az:60,height:+maskEast.value,icon:'▲'}];
+    ctx.save();ctx.textAlign='center';ctx.font='14px Outfit,sans-serif';ctx.globalAlpha=.75;ctx.fillStyle=night?'#7d2828':'#60788c';
+    for(const landmark of landmarks){
+      const x=xFromAz(landmark.az);if(x!==null)ctx.fillText(landmark.icon,x,yFromAlt(landmark.height)+4);
     }
     ctx.restore();
   }
 
-  // Conifère Az 60°
-  const treeX60=xFromAz(60);
-  if(treeX60!==null){
-    const treeBase60=PT+CH;
-    const treeH60=CH*0.10;
-    ctx.save();
-    ctx.globalAlpha=0.45;
-    ctx.fillStyle=night?'#3a2510':'#5a3818';
-    ctx.fillRect(treeX60-1.5,treeBase60-treeH60*0.18,3,treeH60*0.18);
-    ctx.fillStyle=night?'#1a3014':'#2a5020';
-    ctx.beginPath();
-    ctx.moveTo(treeX60-treeH60*0.22,treeBase60-treeH60*0.16);
-    ctx.lineTo(treeX60+treeH60*0.22,treeBase60-treeH60*0.16);
-    ctx.lineTo(treeX60,treeBase60-treeH60);
-    ctx.closePath();ctx.fill();
-    ctx.restore();
+  // Placement des noms sans chevauchement
+  const placedLabels=[];
+  for(const item of labelCandidates.sort((a,b)=>b.priority-a.priority)){
+    ctx.font=item.font;
+    const width=ctx.measureText(item.text).width+6,height=14;
+    const positions=item.centered
+      ?[[item.x-width/2,item.y-7],[item.x-width/2,item.y+10]]
+      :[[item.x+item.size+3,item.y-7],[item.x-width-item.size-3,item.y-7],[item.x-width/2,item.y-item.size-15],[item.x-width/2,item.y+item.size+4]];
+    let chosen=null;
+    for(const [x,y] of positions){
+      const rect={x,y,w:width,h:height};
+      const inside=x>=PL&&x+width<=PL+CW&&y>=PT&&y+height<=PT+CH;
+      const overlap=placedLabels.some(p=>!(rect.x+rect.w<p.x||p.x+p.w<rect.x||rect.y+rect.h<p.y||p.y+p.h<rect.y));
+      if(inside&&!overlap){chosen=rect;break;}
+    }
+    if(!chosen&&item.priority>=90) chosen={x:Math.max(PL,Math.min(PL+CW-width,positions[0][0])),y:Math.max(PT,Math.min(PT+CH-height,positions[0][1])),w:width,h:height};
+    if(!chosen) continue;
+    placedLabels.push(chosen);
+    ctx.save();ctx.globalAlpha=item.priority===1?.78:1;ctx.font=item.font;ctx.textAlign='left';ctx.textBaseline='top';
+    ctx.lineWidth=3;ctx.strokeStyle=night?'rgba(20,0,0,.95)':'rgba(1,6,12,.95)';ctx.strokeText(item.text,chosen.x+3,chosen.y+1);
+    ctx.fillStyle=item.color;ctx.fillText(item.text,chosen.x+3,chosen.y+1);ctx.restore();
   }
 }
 
@@ -1045,12 +1158,19 @@ sky.addEventListener('mousemove',e=>{
     _hovered=found.name;
     const ph=found.type==='moon'?moonPhase(date):null;
     const ocul=oculaires.find(o=>o.mm===selectedOcul);
+    const ev=getDailyEvents(found,date,latv,lonv);
+    const eventLine=ev.circumpolar
+      ?`Circumpolaire · culmine ${formatClock(ev.transit)} (${ev.maxAlt.toFixed(0)}°)`
+      :ev.neverRises?`Ne se lève pas ce jour`:`Lever ${formatClock(ev.rise)} · culmine ${formatClock(ev.transit)} · coucher ${formatClock(ev.set)}`;
+    const maskLine=horizonToggle.checked&&found.alt<horizonAtAz(found.az)?`<span class="tt-fov">Masqué par le balcon sous ${horizonAtAz(found.az).toFixed(1)}°</span>`:'';
     const fovLine=ocul?`<span class="tt-fov">Champ ${ocul.name} : ${ocul.fov.toFixed(2)}° · ${(ocul.fov*60).toFixed(0)}'</span>`:'';
     tooltip.innerHTML=`<strong>${found.name}</strong>
       <span class="tt-mono">Az ${found.az.toFixed(1)}° · Alt ${found.alt.toFixed(1)}°</span>
+      <span class="tt-mono">${eventLine}</span>
       ${found.mag!==undefined?`<span class="tt-mono">Magnitude : ${found.mag}</span>`:''}
       ${found.note?`<span style="font-size:10px;color:#8ab">${found.note}</span>`:''}
       ${ph!==null?`<span class="tt-mono">${moonPhaseName(ph)} (${(ph*100).toFixed(0)}%)</span>`:''}
+      ${maskLine}
       ${fovLine}`;
     tooltip.style.opacity='1';
     tooltip.style.left=(e.clientX+14)+'px';
@@ -1119,6 +1239,12 @@ document.getElementById('eveningBtn').onclick=()=>{const d=new Date();d.setHours
 document.getElementById('refreshBtn').onclick=compute;
 document.getElementById('nightBtn').onclick=()=>{document.body.classList.toggle('night');compute();};
 maxMag.oninput=compute;
+constLinesToggle.onchange=compute;
+constNamesToggle.onchange=compute;
+horizonToggle.onchange=()=>{document.getElementById('horizonControls').style.opacity=horizonToggle.checked?'1':'.45';compute();};
+for(const [control,value] of [[maskWest,document.getElementById('maskWestValue')],[maskCity,document.getElementById('maskCityValue')],[maskEast,document.getElementById('maskEastValue')]]){
+  control.oninput=()=>{value.textContent=Number(control.value).toFixed(Number(control.value)%1?1:0)+'°';compute();};
+}
 window.onresize=compute;
 
 // ── Export TXT ──
@@ -1129,15 +1255,13 @@ function exportTxt(){
     const rd=getRD(o,date);
     const p=altAz(rd.ra,rd.dec,date,+lat.value,+lon.value);
     const a1=+az1.value,a2=+az2.value,minA=+minAlt.value,magMax=+maxMag.value;
-    const vis=p.alt>=minA&&inWindow(p.az,a1,a2)&&(o.mag===undefined||o.mag<=magMax);
-    if(vis) rows.push(o);
-    rows[rows.length-1]={...o,...p};
+    const vis=p.alt>=Math.max(minA,horizonAtAz(p.az))&&inWindow(p.az,a1,a2)&&(o.mag===undefined||o.mag<=magMax);
+    if(vis) rows.push({...o,...p,visible:true});
   }
   const lines=[`Mini Stellarium — Sarzeau — Export`,
     `Date : ${date.toLocaleString('fr-FR')}`,``,
     `Objets visibles dans la fenêtre (${az1.value}°→${az2.value}°) :`,``];
-  for(const r of rows.filter((_,i)=>i<rows.length)){
-    if(!r.visible) continue;
+  for(const r of rows){
     lines.push(`${r.name}`.padEnd(30)+`Az ${r.az?.toFixed(1)}°  Alt ${r.alt?.toFixed(1)}°  ${r.mag!==undefined?'mag '+r.mag:''}  ${r.note||''}`);
   }
   const blob=new Blob([lines.join('\n')],{type:'text/plain'});
@@ -1183,7 +1307,7 @@ function searchVisibility(){
       if(getSunAlt(d,latv,lonv)>-6){if(inSlot){créneaux.push({start:slotStart,end:new Date(d.getTime()-STEP*60000),maxAlt:slotMaxAlt,az:slotAz});inSlot=false;}continue;}
       const rd=getRD(obj,d);
       const p=altAz(rd.ra,rd.dec,d,latv,lonv);
-      const ok=p.alt>=minAltv&&inWindow(p.az,az1v,az2v);
+      const ok=p.alt>=Math.max(minAltv,horizonAtAz(p.az))&&inWindow(p.az,az1v,az2v);
       if(ok){if(!inSlot){inSlot=true;slotStart=new Date(d);slotMaxAlt=p.alt;slotAz=p.az;}else if(p.alt>slotMaxAlt){slotMaxAlt=p.alt;slotAz=p.az;}}
       else if(inSlot){créneaux.push({start:slotStart,end:new Date(d.getTime()-STEP*60000),maxAlt:slotMaxAlt,az:slotAz});inSlot=false;}
     }
@@ -1248,3 +1372,4 @@ compute();
 </script>
 </body>
 </html>
+
